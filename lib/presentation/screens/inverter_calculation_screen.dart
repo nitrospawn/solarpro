@@ -193,7 +193,7 @@ class _InverterCalculationScreenState extends State<InverterCalculationScreen> {
                     children: [
                       Text('Calculation Results', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 16),
-                      _buildResultRow('Wiring Configuration', _wiringConfig!, Icons.cable),
+                      _buildResultRow('Battery configuration', _wiringConfig!, Icons.cable),
                       _buildResultRow('Battery Bank Total', '${_bankTotalAh!.toStringAsFixed(0)} Ah', Icons.battery_charging_full),
                       const Divider(),
                       _buildResultRow('Total Energy (Raw)', '${_rawKwh!.toStringAsFixed(2)} kWh', Icons.flash_on),
@@ -203,7 +203,7 @@ class _InverterCalculationScreenState extends State<InverterCalculationScreen> {
                       _buildResultRow('Actual Load Current', '${_actualLoadAmps!.toStringAsFixed(1)} Amps', Icons.electric_meter),
                       const Divider(),
                       _buildResultRow('Estimated Runtime', '${_runtimeHours!.toStringAsFixed(1)} Hours', Icons.timer),
-                      _buildResultRow('Recommended Charge', '${_minChargeCurrent!.toStringAsFixed(1)}A - ${_maxChargeCurrent!.toStringAsFixed(1)}A', Icons.power),
+                      _buildResultRow('Charging (Amps)', '${_minChargeCurrent!.toStringAsFixed(1)}A - ${_maxChargeCurrent!.toStringAsFixed(1)}A', Icons.power),
                     ],
                   ),
                 ),

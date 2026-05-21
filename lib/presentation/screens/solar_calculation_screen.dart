@@ -16,6 +16,7 @@ class _SolarCalculationScreenState extends State<SolarCalculationScreen> {
   final _panelVmpController = TextEditingController();
   final _inverterVoltageController = TextEditingController();
   final _batteryAhController = TextEditingController();
+  final _batteryVoltageController = TextEditingController();
   final _totalBatteriesController = TextEditingController();
   final _activeLoadAmpsController = TextEditingController();
 
@@ -30,6 +31,10 @@ class _SolarCalculationScreenState extends State<SolarCalculationScreen> {
   double? _minMpptAmps;
   double? _recMpptAmps;
   String? _wiringExplanation;
+  double? _bankTotalAh;
+  double? _capacityToReplenishAh;
+  double? _netChargingAmps;
+  double? _estimatedChargeTimeHours;
 
   @override
   void dispose() {
@@ -37,6 +42,7 @@ class _SolarCalculationScreenState extends State<SolarCalculationScreen> {
     _panelVmpController.dispose();
     _inverterVoltageController.dispose();
     _batteryAhController.dispose();
+    _batteryVoltageController.dispose();
     _totalBatteriesController.dispose();
     _activeLoadAmpsController.dispose();
     super.dispose();
@@ -49,6 +55,7 @@ class _SolarCalculationScreenState extends State<SolarCalculationScreen> {
     final vmpV = double.tryParse(_panelVmpController.text) ?? 0;
     final invSystemDCV = double.tryParse(_inverterVoltageController.text) ?? 0;
     final singleBattAh = double.tryParse(_batteryAhController.text) ?? 0;
+    final batVoltsV = double.tryParse(_batteryVoltageController.text) ?? 0;
     final totalBatt = int.tryParse(_totalBatteriesController.text) ?? 0;
     
     double activeLoadAmps = 0;
@@ -56,10 +63,10 @@ class _SolarCalculationScreenState extends State<SolarCalculationScreen> {
       activeLoadAmps = double.tryParse(_activeLoadAmpsController.text) ?? 0;
     }
 
-    if (pmaxW <= 0 || vmpV <= 0 || invSystemDCV <= 0 || singleBattAh <= 0 || totalBatt <= 0) return;
+    if (pmaxW <= 0 || vmpV <= 0 || invSystemDCV <= 0 || singleBattAh <= 0 || batVoltsV <= 0 || totalBatt <= 0) return;
 
-    // 1. Battery Setup Deductions (Assumes 12V single battery blocks)
-    const double singleBatteryVolts = 12.0;
+    // 1. Battery Setup Deductions
+    final double singleBatteryVolts = batVoltsV;
     final int seriesStrings = (invSystemDCV / singleBatteryVolts).toInt();
     if (seriesStrings <= 0) return; // Prevent division by zero
     
@@ -104,6 +111,14 @@ class _SolarCalculationScreenState extends State<SolarCalculationScreen> {
       }
     }
 
+    // 6. Charging Time Sizing Logic
+    final double totalSolarAmpsAvailable = totalPanelsRoundedUp * ampsFromSinglePanel;
+    final double netChargingAmpsToBattery = totalSolarAmpsAvailable - (_includeActiveLoad ? activeLoadAmps : 0);
+    final double capacityToReplenishAh = totalBankAh * 0.50;
+    final double estimatedFullChargeTimeHours = netChargingAmpsToBattery > 0 
+        ? capacityToReplenishAh / netChargingAmpsToBattery 
+        : -1.0; // Indicate a deficit
+
     setState(() {
       _systemGoal = _includeActiveLoad 
           ? "Charge battery bank AND support active daytime load simultaneously."
@@ -115,6 +130,10 @@ class _SolarCalculationScreenState extends State<SolarCalculationScreen> {
       _minMpptAmps = minMppt;
       _recMpptAmps = recommendedMppt;
       _wiringExplanation = "Wired with $panelSeriesCount panels in series to step up voltage over the ${targetSystemChargingVoltage.toStringAsFixed(1)}V charging threshold, and $panelParallelCount strings in parallel to meet the ${(totalTargetCurrent).toStringAsFixed(1)}A current demand.";
+      _bankTotalAh = totalBankAh;
+      _capacityToReplenishAh = capacityToReplenishAh;
+      _netChargingAmps = netChargingAmpsToBattery;
+      _estimatedChargeTimeHours = estimatedFullChargeTimeHours;
     });
   }
 
@@ -148,13 +167,15 @@ class _SolarCalculationScreenState extends State<SolarCalculationScreen> {
                       const SizedBox(height: 16),
                       _buildTextField(_panelPmaxController, 'Panel Rating (Pmax)'),
                       const SizedBox(height: 12),
-                      _buildTextField(_panelVmpController, 'Panel Vmp (V)'),
+                      _buildTextField(_panelVmpController, 'Panel Voltage(Vmp)'),
                       const SizedBox(height: 12),
-                      _buildTextField(_inverterVoltageController, 'System DC Volts (V)'),
+                      _buildTextField(_inverterVoltageController, 'Inverter DC Volts(V)'),
                       const SizedBox(height: 12),
                       _buildTextField(_totalBatteriesController, 'Total Batteries', isInteger: true),
                       const SizedBox(height: 12),
                       _buildTextField(_batteryAhController, 'Single Battery Cap. (Ah)'),
+                      const SizedBox(height: 12),
+                      _buildTextField(_batteryVoltageController, 'Single Battery DC Volts (V)'),
                       const SizedBox(height: 16),
                       
                       // Active Load Toggle
@@ -230,6 +251,14 @@ class _SolarCalculationScreenState extends State<SolarCalculationScreen> {
                       _buildResultRow('Recommended Rating', '${_recMpptAmps!.toStringAsFixed(0)} A', Icons.check_circle),
                       const SizedBox(height: 4),
                       const Text('Includes 25% safety margin for continuous current protection.', style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey)),
+
+                      const Divider(height: 24),
+                      Text('Charging Time Metrics', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+                      const SizedBox(height: 8),
+                      _buildResultRow('Bank Total Capacity', '${_bankTotalAh!.toStringAsFixed(0)} Ah', Icons.battery_full),
+                      _buildResultRow('Capacity to Replenish (50%)', '${_capacityToReplenishAh!.toStringAsFixed(0)} Ah', Icons.battery_saver),
+                      _buildResultRow('Net Charging Current', '${_netChargingAmps!.toStringAsFixed(1)} A', Icons.electric_bolt),
+                      _buildResultRow('Estimated Charge Time', _estimatedChargeTimeHours! > 0 ? '${_estimatedChargeTimeHours!.toStringAsFixed(1)} Hours' : 'Deficit', Icons.timer),
 
                       const Divider(height: 24),
                       Text('Engineering Notes:', style: Theme.of(context).textTheme.bodySmall),
