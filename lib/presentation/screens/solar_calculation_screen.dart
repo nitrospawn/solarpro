@@ -120,17 +120,19 @@ class _SolarCalculationScreenState extends State<SolarCalculationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Solar Calculator'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      drawer: const AppDrawer(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Solar Calculator'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        ),
+        drawer: const AppDrawer(),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Input Form Card
             Card(
               elevation: 2,
@@ -239,7 +241,7 @@ class _SolarCalculationScreenState extends State<SolarCalculationScreen> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildTextField(TextEditingController controller, String label, {bool isInteger = false}) {

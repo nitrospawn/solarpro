@@ -28,10 +28,10 @@ class _LoadAnalyzerScreenState extends ConsumerState<LoadAnalyzerScreen> {
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _qtyController = TextEditingController(text: '1');
+  final _qtyController = TextEditingController();
   final _wattsController = TextEditingController();
-  final _surgeController = TextEditingController(text: '1.0');
-  final _hoursController = TextEditingController(text: '8.0');
+  final _surgeController = TextEditingController();
+  final _hoursController = TextEditingController();
 
   // Common Off-Grid Appliance Presets
   final List<Appliance> _presets = [
@@ -158,12 +158,14 @@ class _LoadAnalyzerScreenState extends ConsumerState<LoadAnalyzerScreen> {
     // Run our pure calculation engine on the current list of appliances
     final result = _analyzer.analyze(_appliances);
 
-    return Scaffold(
-      drawer: const AppDrawer(),
-      appBar: AppBar(
-        title: Text(activeProjectName != null ? 'Project: $activeProjectName' : 'Load Analyzer Engine'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Scaffold(
+        drawer: const AppDrawer(),
+        appBar: AppBar(
+          title: Text(activeProjectName != null ? 'Project: $activeProjectName' : 'Load Analyzer Engine'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          actions: [
           IconButton(
             icon: const Icon(Icons.delete_sweep),
             tooltip: 'Clear All Appliances',
@@ -318,6 +320,7 @@ class _LoadAnalyzerScreenState extends ConsumerState<LoadAnalyzerScreen> {
                               decoration: const InputDecoration(labelText: 'Quantity'),
                               keyboardType: TextInputType.number,
                               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -341,6 +344,7 @@ class _LoadAnalyzerScreenState extends ConsumerState<LoadAnalyzerScreen> {
                               decoration: const InputDecoration(labelText: 'Surge (x)'),
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+                              validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -350,6 +354,7 @@ class _LoadAnalyzerScreenState extends ConsumerState<LoadAnalyzerScreen> {
                               decoration: const InputDecoration(labelText: 'Hours (h)'),
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+                              validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                             ),
                           ),
                         ],
@@ -419,6 +424,6 @@ class _LoadAnalyzerScreenState extends ConsumerState<LoadAnalyzerScreen> {
           const SliverToBoxAdapter(child: SizedBox(height: 48)),
         ],
       ),
-    );
+    ));
   }
 }

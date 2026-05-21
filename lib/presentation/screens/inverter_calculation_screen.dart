@@ -115,11 +115,13 @@ class _InverterCalculationScreenState extends State<InverterCalculationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Inverter Calculator'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Inverter Calculator'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        ),
       drawer: const AppDrawer(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -209,7 +211,7 @@ class _InverterCalculationScreenState extends State<InverterCalculationScreen> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildTextField(TextEditingController controller, String label, {bool isInteger = false}) {
